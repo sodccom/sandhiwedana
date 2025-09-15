@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Sinhala:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-dark-charcoal to-dark-charcoal-light text-soft-ivory;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-sm bg-opacity-30 bg-white bg-opacity-[0.02] border border-rich-gold border-opacity-20 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)];
+  }
+  
+  .glass-panel-light {
+    @apply backdrop-blur-md bg-opacity-10 bg-white bg-opacity-[0.05] border border-rich-gold border-opacity-30 rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.4)];
+  }
+  
+  .gold-glow {
+    @apply shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] transition-shadow duration-300;
+  }
+  
+  .floating-orb {
+    @apply w-16 h-16 rounded-full flex items-center justify-center shadow-lg animate-bob bg-gradient-to-br from-rich-gold to-deep-gold;
+  }
+}
