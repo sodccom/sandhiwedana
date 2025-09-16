@@ -6,6 +6,7 @@ import AdminOrders from './components/AdminOrders';
 import AdminProducts from './components/AdminProducts';
 import AdminCustomers from './components/AdminCustomers';
 import AdminSettings from './components/AdminSettings';
+import AdminPolicies from './components/AdminPolicies';
 import AdminLayout from './components/AdminLayout';
 
 const AdminApp: React.FC = () => {
@@ -52,6 +53,7 @@ const AdminApp: React.FC = () => {
         <Route path="/orders" element={<AdminOrders />} />
         <Route path="/products" element={<AdminProducts />} />
         <Route path="/customers" element={<AdminCustomers />} />
+        <Route path="/policies" element={<AdminPolicies />} />
         <Route path="/settings" element={<AdminSettings />} />
       </Routes>
     </AdminLayout>

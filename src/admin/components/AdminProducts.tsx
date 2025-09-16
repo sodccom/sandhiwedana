@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Package, Star, Eye } from 'lucide-react';
 import { Product } from '../../types';
-import { sampleProducts } from '../../data/products';
+import { useProducts } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
 
 const AdminProducts: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products, updateProducts } = useProducts();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
@@ -19,11 +19,6 @@ const AdminProducts: React.FC = () => {
     featured: false,
     images: ['']
   });
-
-  useEffect(() => {
-    // Load products (in real app, this would be from API)
-    setProducts(sampleProducts);
-  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-LK', {
@@ -102,7 +97,7 @@ const AdminProducts: React.FC = () => {
           ? { ...editingProduct, ...formData, updated_at: new Date().toISOString() }
           : p
       );
-      setProducts(updatedProducts);
+      updateProducts(updatedProducts);
       toast.success('Product updated successfully');
     } else {
       // Add new product
@@ -113,7 +108,7 @@ const AdminProducts: React.FC = () => {
         updated_at: new Date().toISOString(),
         ...formData
       };
-      setProducts([...products, newProduct]);
+      updateProducts([...products, newProduct]);
       toast.success('Product added successfully');
     }
     
@@ -122,7 +117,8 @@ const AdminProducts: React.FC = () => {
 
   const deleteProduct = (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== productId));
+      const updatedProducts = products.filter(p => p.id !== productId);
+      updateProducts(updatedProducts);
       toast.success('Product deleted successfully');
     }
   };

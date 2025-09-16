@@ -11,11 +11,15 @@ import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import OrderSuccess from './components/OrderSuccess';
 import ChatBot from './components/ChatBot';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsConditions from './components/TermsConditions';
+import RefundPolicy from './components/RefundPolicy';
 import { useCart } from './hooks/useCart';
-import { sampleProducts } from './data/products';
+import { useProducts } from './hooks/useProducts';
 import { motion } from 'framer-motion';
 
 function CustomerApp() {
+  const { products } = useProducts();
   const {
     cartItems,
     isCartOpen,
@@ -30,8 +34,8 @@ function CustomerApp() {
   } = useCart();
 
   const handleOrderNow = () => {
-    if (sampleProducts.length > 0) {
-      addToCart(sampleProducts[0]);
+    if (products.length > 0) {
+      addToCart(products[0]);
       openCart();
     }
   };
@@ -51,6 +55,9 @@ function CustomerApp() {
           />
         } />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/" element={
           <>
             <Navigation cartItemsCount={getTotalItems()} onCartOpen={openCart} />
@@ -84,7 +91,7 @@ function CustomerApp() {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                  {sampleProducts.map((product) => (
+                  {products.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
@@ -121,6 +128,29 @@ function CustomerApp() {
                     සන්ධි වේදනාහරණී
                   </p>
                 </div>
+                
+                {/* Footer Links */}
+                <div className="flex flex-wrap justify-center gap-6 mb-6 text-sm">
+                  <a 
+                    href="/privacy-policy" 
+                    className="text-soft-ivory text-opacity-70 hover:text-rich-gold transition-colors duration-200"
+                  >
+                    Privacy Policy
+                  </a>
+                  <a 
+                    href="/terms-conditions" 
+                    className="text-soft-ivory text-opacity-70 hover:text-rich-gold transition-colors duration-200"
+                  >
+                    Terms & Conditions
+                  </a>
+                  <a 
+                    href="/refund-policy" 
+                    className="text-soft-ivory text-opacity-70 hover:text-rich-gold transition-colors duration-200"
+                  >
+                    Refund Policy
+                  </a>
+                </div>
+                
                 <div className="text-soft-ivory text-opacity-60 text-sm">
                   <p>&copy; 2024 Sandhi Wedanaharanie. All rights reserved.</p>
                   <p className="mt-2">Natural Relief, Local Tradition</p>

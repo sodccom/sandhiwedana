@@ -10,7 +10,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  Leaf
+  Leaf,
+  FileText
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -27,6 +28,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
     { path: '/admin/orders', icon: ShoppingCart, label: 'Orders', labelSi: 'ඇණවුම්' },
     { path: '/admin/products', icon: Package, label: 'Products', labelSi: 'නිෂ්පාදන' },
     { path: '/admin/customers', icon: Users, label: 'Customers', labelSi: 'පාරිභෝගිකයන්' },
+    { path: '/admin/policies', icon: FileText, label: 'Policies', labelSi: 'ප්‍රතිපත්ති' },
     { path: '/admin/settings', icon: Settings, label: 'Settings', labelSi: 'සැකසුම්' },
   ];
 
