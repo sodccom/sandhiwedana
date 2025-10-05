@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, Package, Star, Eye, Loader } from 'lucide-react';
+import { Plus, CreditCard as Edit, Trash2, Package, Star, Eye, Loader } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
 import { productsService } from '../../services/productsService';
