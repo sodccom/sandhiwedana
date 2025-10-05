@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, CreditCard, Truck, Phone, MapPin, User, Mail } from 'lucide-react';
 import { CartItem, Order } from '../types';
 import toast from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { ordersService } from '../services/ordersService';
+import { analyticsService } from '../services/analyticsService';
 
 interface CheckoutProps {
   items: CartItem[];
@@ -53,40 +54,49 @@ const Checkout: React.FC<CheckoutProps> = ({ items, totalAmount, onOrderComplete
     setIsProcessing(true);
 
     try {
-      // Create order
-      const orderId = uuidv4();
-      const orderNumber = `SW${Date.now().toString().slice(-6)}`;
-      
-      const order: Order = {
-        id: orderId,
-        order_number: orderNumber,
+      const orderItems = items.map(item => ({
+        product_id: item.product.id,
+        product_name: item.product.name_en,
+        quantity: item.quantity,
+        price: item.product.price_lkr,
+      }));
+
+      const order = await ordersService.create({
         customer_name: formData.customerName,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        province: formData.province,
-        items: items,
-        total_lkr: totalAmount,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        shipping_address: {
+          street: formData.address,
+          city: formData.city,
+          province: formData.province,
+        },
+        items: orderItems,
+        subtotal: totalAmount,
+        delivery_fee: 0,
+        discount_amount: 0,
+        total_amount: totalAmount,
         payment_method: formData.paymentMethod,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
+        notes: formData.specialInstructions,
+      });
 
-      // Store order in localStorage (in real app, this would be API call)
-      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      existingOrders.push(order);
-      localStorage.setItem('orders', JSON.stringify(existingOrders));
+      if (!order) {
+        throw new Error('Failed to create order');
+      }
 
-      // Clear cart
+      await analyticsService.trackEvent('order_placed', {
+        order_id: order.id,
+        order_number: order.order_number,
+        total_amount: totalAmount,
+        items_count: items.length,
+        payment_method: formData.paymentMethod,
+      });
+
       onOrderComplete();
-
-      // Show success message
       toast.success('Order placed successfully!');
-
-      // Navigate to success page
-      navigate(`/order-success/${orderId}`);
+      navigate(`/order-success/${order.id}`);
 
     } catch (error) {
+      console.error('Order error:', error);
       toast.error('Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);

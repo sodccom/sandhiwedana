@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, Package, Star, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Star, Eye, Loader } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts } from '../../hooks/useProducts';
+import { productsService } from '../../services/productsService';
 import toast from 'react-hot-toast';
 
 const AdminProducts: React.FC = () => {
-  const { products, updateProducts } = useProducts();
+  const { products, loading, refreshProducts } = useProducts();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name_si: '',
     name_en: '',
+    slug: '',
     description_si: '',
     description_en: '',
     price_lkr: 0,
@@ -53,12 +56,17 @@ const AdminProducts: React.FC = () => {
     setFormData(prev => ({ ...prev, images: newImages }));
   };
 
+  const generateSlug = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  };
+
   const openModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
         name_si: product.name_si,
         name_en: product.name_en,
+        slug: product.slug,
         description_si: product.description_si,
         description_en: product.description_en,
         price_lkr: product.price_lkr,
@@ -71,6 +79,7 @@ const AdminProducts: React.FC = () => {
       setFormData({
         name_si: '',
         name_en: '',
+        slug: '',
         description_si: '',
         description_en: '',
         price_lkr: 0,
@@ -87,39 +96,41 @@ const AdminProducts: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingProduct) {
-      // Update existing product
-      const updatedProducts = products.map(p => 
-        p.id === editingProduct.id 
-          ? { ...editingProduct, ...formData, updated_at: new Date().toISOString() }
-          : p
-      );
-      updateProducts(updatedProducts);
-      toast.success('Product updated successfully');
-    } else {
-      // Add new product
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        slug: formData.name_en.toLowerCase().replace(/\s+/g, '-'),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        ...formData
-      };
-      updateProducts([...products, newProduct]);
-      toast.success('Product added successfully');
+    setIsSaving(true);
+
+    try {
+      const slug = formData.slug || generateSlug(formData.name_en);
+      const productData = { ...formData, slug };
+
+      if (editingProduct) {
+        await productsService.update(editingProduct.id, productData);
+        toast.success('Product updated successfully');
+      } else {
+        await productsService.create(productData as any);
+        toast.success('Product added successfully');
+      }
+
+      await refreshProducts();
+      closeModal();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast.error('Failed to save product');
+    } finally {
+      setIsSaving(false);
     }
-    
-    closeModal();
   };
 
-  const deleteProduct = (productId: string) => {
+  const deleteProduct = async (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      const updatedProducts = products.filter(p => p.id !== productId);
-      updateProducts(updatedProducts);
-      toast.success('Product deleted successfully');
+      const success = await productsService.delete(productId);
+      if (success) {
+        await refreshProducts();
+        toast.success('Product deleted successfully');
+      } else {
+        toast.error('Failed to delete product');
+      }
     }
   };
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Truck, Star } from 'lucide-react';
+import { ShoppingCart, Truck, Star, Heart } from 'lucide-react';
 import { Product } from '../types';
+import { useWishlist } from '../hooks/useWishlist';
 
 interface ProductCardProps {
   product: Product;
@@ -9,6 +10,9 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const inWishlist = isInWishlist(product.id);
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-LK', {
       style: 'currency',
@@ -16,6 +20,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price).replace('LKR', '₨');
+  };
+
+  const handleWishlistToggle = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   return (
@@ -39,6 +51,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               Featured
             </div>
           )}
+          <motion.button
+            onClick={handleWishlistToggle}
+            className="absolute top-4 left-4 p-2 glass-panel rounded-full hover:bg-rich-gold hover:bg-opacity-30 transition-all"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Heart
+              className={`w-5 h-5 transition-all ${
+                inWishlist ? 'fill-red-500 text-red-500' : 'text-soft-ivory'
+              }`}
+            />
+          </motion.button>
         </div>
 
         {/* Product Info */}

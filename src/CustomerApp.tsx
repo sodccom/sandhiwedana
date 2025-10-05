@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
@@ -14,12 +14,16 @@ import ChatBot from './components/ChatBot';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsConditions from './components/TermsConditions';
 import RefundPolicy from './components/RefundPolicy';
+import SearchBar from './components/SearchBar';
+import ProductFilters from './components/ProductFilters';
 import { useCart } from './hooks/useCart';
 import { useProducts } from './hooks/useProducts';
 import { motion } from 'framer-motion';
+import { SlidersHorizontal, Loader } from 'lucide-react';
+import { analyticsService } from './services/analyticsService';
 
 function CustomerApp() {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const {
     cartItems,
     isCartOpen,
@@ -33,16 +37,81 @@ function CustomerApp() {
     clearCart,
   } = useCart();
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    priceRange: { min: 0, max: 999999 },
+    sortBy: 'featured' as 'price-asc' | 'price-desc' | 'name' | 'featured',
+    inStock: false,
+  });
+
   const handleOrderNow = () => {
     if (products.length > 0) {
       addToCart(products[0]);
       openCart();
+      analyticsService.trackEvent('hero_cta_click', { action: 'order_now' });
     }
   };
 
   const handleLearnMore = () => {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+    analyticsService.trackEvent('hero_cta_click', { action: 'learn_more' });
   };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query) {
+      analyticsService.trackEvent('product_search', { query });
+    }
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      priceRange: { min: 0, max: 999999 },
+      sortBy: 'featured',
+      inStock: false,
+    });
+  };
+
+  const filteredProducts = useMemo(() => {
+    let filtered = [...products];
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name_en.toLowerCase().includes(query) ||
+          p.name_si.toLowerCase().includes(query) ||
+          p.description_en.toLowerCase().includes(query)
+      );
+    }
+
+    filtered = filtered.filter(
+      (p) =>
+        p.price_lkr >= filters.priceRange.min &&
+        p.price_lkr <= filters.priceRange.max
+    );
+
+    if (filters.inStock) {
+      filtered = filtered.filter((p) => p.stock > 0);
+    }
+
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'price-asc':
+          return a.price_lkr - b.price_lkr;
+        case 'price-desc':
+          return b.price_lkr - a.price_lkr;
+        case 'name':
+          return a.name_en.localeCompare(b.name_en);
+        case 'featured':
+        default:
+          return b.featured === a.featured ? 0 : b.featured ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  }, [products, searchQuery, filters]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-charcoal to-dark-charcoal-light">
@@ -90,17 +159,53 @@ function CustomerApp() {
                   </motion.p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                  {products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={addToCart}
-                    />
-                  ))}
+                <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center justify-center">
+                  <SearchBar
+                    onSearch={handleSearch}
+                    placeholder="Search products..."
+                  />
+                  <motion.button
+                    onClick={() => setIsFiltersOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 glass-panel hover:bg-rich-gold hover:bg-opacity-20 transition-all rounded-xl"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <SlidersHorizontal className="w-5 h-5 text-rich-gold" />
+                    <span className="text-soft-ivory font-medium">Filters</span>
+                  </motion.button>
                 </div>
+
+                {loading ? (
+                  <div className="flex justify-center items-center py-20">
+                    <Loader className="w-12 h-12 text-rich-gold animate-spin" />
+                  </div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-soft-ivory text-opacity-70 text-xl">
+                      No products found matching your criteria.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    {filteredProducts.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onAddToCart={addToCart}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
+
+            <ProductFilters
+              filters={filters}
+              onFilterChange={setFilters}
+              onReset={resetFilters}
+              isOpen={isFiltersOpen}
+              onClose={() => setIsFiltersOpen(false)}
+            />
 
             <Benefits />
             <Testimonials />
